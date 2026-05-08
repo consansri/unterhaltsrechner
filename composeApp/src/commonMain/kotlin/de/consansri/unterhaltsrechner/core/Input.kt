@@ -36,7 +36,7 @@ fun Input(
         Text(label, modifier = Modifier.weight(1f), textAlign = TextAlign.Right)
 
         val borderColor by animateColorAsState(
-            targetValue = if (valid) Color.LightGray else Color.Red,
+            targetValue = if (valid) Color.Transparent else Color.Red,
         )
 
         BasicTextField(
@@ -45,7 +45,7 @@ fun Input(
                 valid = onChange(it)
             },
             cursorBrush = SolidColor(Color.Black),
-            modifier = Modifier.weight(1f).border(1.dp, borderColor, CircleShape).padding(8.dp),
+            modifier = Modifier.weight(1f).border(1.dp, borderColor, CircleShape).padding(4.dp)
         )
     }
 

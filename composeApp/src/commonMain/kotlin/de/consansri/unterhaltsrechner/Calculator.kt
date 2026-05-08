@@ -13,8 +13,10 @@ import de.consansri.unterhaltsrechner.core.Input
 import de.consansri.unterhaltsrechner.core.Parallel
 import de.consansri.unterhaltsrechner.core.Result
 import de.consansri.unterhaltsrechner.core.Section
+import de.consansri.unterhaltsrechner.core.ZeitraumInput
 import de.consansri.unterhaltsrechner.ratio.Ratio
 import de.consansri.unterhaltsrechner.types.Euro
+import de.consansri.unterhaltsrechner.types.ZeitraumBetrag
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,68 +28,76 @@ fun Calculator() {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-        var grundbedarf by remember { mutableStateOf(Euro(1000.00)) }
-        var foerderung by remember { mutableStateOf(Euro(0)) }
-        val unterhalt = grundbedarf - foerderung
+        var grundbedarfEingabe by remember { mutableStateOf(ZeitraumBetrag(Euro(1000.00))) }
+        var foerderungEingabe by remember { mutableStateOf(ZeitraumBetrag(Euro(0))) }
+        // Für die interne Rechnungen nutzen wir konsequent die auf den Monat normierten Werte
+        val unterhalt = grundbedarfEingabe - foerderungEingabe
 
-        var studiengebuehren by remember { mutableStateOf(Euro(0)) }
-
-        var krankenversicherung by remember { mutableStateOf(Euro(0)) }
+        var studiengebuehrenEingabe by remember { mutableStateOf(ZeitraumBetrag(Euro(0))) }
+        var krankenversicherungEingabe by remember { mutableStateOf(ZeitraumBetrag(Euro(0))) }
 
         Section("Leistungen") {
 
             Parallel {
 
                 Section("Unterhalt", Modifier.weight(1f)) {
+                    ZeitraumInput(
+                        label = "Grundbedarf",
+                        value = grundbedarfEingabe.betrag.toString(),
+                        zeitraum = grundbedarfEingabe.zeitraum,
+                        onValueChange = {
+                            Euro.parse(it)?.let { e -> grundbedarfEingabe = grundbedarfEingabe.copy(betrag = e); true } ?: false
+                        },
+                        onZeitraumChange = { grundbedarfEingabe = grundbedarfEingabe.copy(zeitraum = it) }
+                    )
 
-                    Input("Grundbedarf", grundbedarf.toString()) {
-                        Euro.parse(it)?.let {
-                            grundbedarf = it
-                            true
-                        } ?: false
-                    }
-
-                    Input("Förderung", foerderung.toString()) {
-                        Euro.parse(it)?.let {
-                            foerderung = it
-                            true
-                        } ?: false
-                    }
-
+                    ZeitraumInput(
+                        label = "Förderung",
+                        value = foerderungEingabe.betrag.toString(),
+                        zeitraum = foerderungEingabe.zeitraum,
+                        onValueChange = {
+                            Euro.parse(it)?.let { e -> foerderungEingabe = foerderungEingabe.copy(betrag = e); true } ?: false
+                        },
+                        onZeitraumChange = { foerderungEingabe = foerderungEingabe.copy(zeitraum = it) }
+                    )
                     Result("Unterhalt", unterhalt)
                 }
 
                 Section("Studiengebühren", Modifier.weight(1f)) {
-
-                    Input("Gebühren", studiengebuehren.toString()) {
-                        Euro.parse(it)?.let {
-                            studiengebuehren = it
-                            true
-                        } ?: false
-                    }
-
+                    ZeitraumInput(
+                        label = "Gebühren",
+                        value = studiengebuehrenEingabe.betrag.toString(),
+                        zeitraum = studiengebuehrenEingabe.zeitraum,
+                        onValueChange = {
+                            Euro.parse(it)?.let { e -> studiengebuehrenEingabe = studiengebuehrenEingabe.copy(betrag = e); true } ?: false
+                        },
+                        onZeitraumChange = { studiengebuehrenEingabe = studiengebuehrenEingabe.copy(zeitraum = it) }
+                    )
                 }
 
                 Section("Krankenversicherung", Modifier.weight(1f)) {
-                    Input("Gebühren", krankenversicherung.toString()) {
-                        Euro.parse(it)?.let {
-                            krankenversicherung = it
-                            true
-                        } ?: false
-                    }
+                    ZeitraumInput(
+                        label = "Gebühren",
+                        value = krankenversicherungEingabe.betrag.toString(),
+                        zeitraum = krankenversicherungEingabe.zeitraum,
+                        onValueChange = {
+                            Euro.parse(it)?.let { e -> krankenversicherungEingabe = krankenversicherungEingabe.copy(betrag = e); true } ?: false
+                        },
+                        onZeitraumChange = { krankenversicherungEingabe = krankenversicherungEingabe.copy(zeitraum = it) }
+                    )
                 }
             }
         }
 
         val leistungen = remember(
             unterhalt,
-            studiengebuehren,
-            krankenversicherung
-        ) { 
+            studiengebuehrenEingabe,
+            krankenversicherungEingabe
+        ) {
             Leistungen(
                 unterhalt = unterhalt,
-                studiengebuehren = studiengebuehren,
-                krankenversicherung = krankenversicherung
+                studiengebuehren = studiengebuehrenEingabe,
+                krankenversicherung = krankenversicherungEingabe
             )
         }
 

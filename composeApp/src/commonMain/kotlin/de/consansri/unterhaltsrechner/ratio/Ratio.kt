@@ -6,19 +6,21 @@ import de.consansri.unterhaltsrechner.core.Parallel
 import de.consansri.unterhaltsrechner.core.Section
 import de.consansri.unterhaltsrechner.types.Euro
 import de.consansri.unterhaltsrechner.types.Prozent
+import de.consansri.unterhaltsrechner.types.Zeitraum
+import de.consansri.unterhaltsrechner.types.ZeitraumBetrag
 
 @Composable
 fun Ratio(
     leistungen: Leistungen
 ) {
 
-    var p1EinkommenGeglaetted by remember { mutableStateOf(Euro(100)) }
-    var p2EinkommenGeglaetted by remember { mutableStateOf(Euro(100)) }
+    var p1EinkommenGeglaetted by remember { mutableStateOf(ZeitraumBetrag(Euro.NULL, Zeitraum.JAHR)) }
+    var p2EinkommenGeglaetted by remember { mutableStateOf(ZeitraumBetrag(Euro.NULL, Zeitraum.JAHR)) }
     val combined = remember(p1EinkommenGeglaetted, p2EinkommenGeglaetted) {
         p1EinkommenGeglaetted + p2EinkommenGeglaetted
     }
     val ratioInvalid = remember(combined) {
-        combined == Euro(0)
+        combined.proMonat == Euro.NULL
     }
 
     val p1Ratio = remember(p1EinkommenGeglaetted, combined) {

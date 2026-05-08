@@ -31,6 +31,9 @@ value class Euro(val inCents: Long) {
     }
 
     // Praktische Operatoren zum Rechnen mit Euro-Werten
+    // Neue Operatoren für die Zeitraum-Berechnung
+    operator fun div(months: Int): Euro = Euro(this.inCents / months)
+    operator fun times(months: Int): Euro = Euro(this.inCents * months)
     operator fun plus(other: Euro) = Euro(this.inCents + other.inCents)
     operator fun minus(other: Euro) = Euro(this.inCents - other.inCents)
     operator fun times(other: Prozent) = Euro((this.inCents * other.toDouble()).roundToLong())
