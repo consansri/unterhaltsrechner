@@ -7,24 +7,25 @@ import de.consansri.unterhaltsrechner.Leistungen
 import de.consansri.unterhaltsrechner.core.HLine
 import de.consansri.unterhaltsrechner.core.Result
 import de.consansri.unterhaltsrechner.core.Section
-import de.consansri.unterhaltsrechner.core.ZeitraumInput
+import de.consansri.unterhaltsrechner.core.ZBetragInput
 import de.consansri.unterhaltsrechner.types.Euro
 import de.consansri.unterhaltsrechner.types.Prozent
 import de.consansri.unterhaltsrechner.types.Zeitraum
-import de.consansri.unterhaltsrechner.types.ZeitraumBetrag
+import de.consansri.unterhaltsrechner.types.ZBetrag
 
 @Composable
 fun RowScope.Parent(
     name: String,
     ratio: Prozent,
     leistungen: Leistungen,
-    onEinkommenChange: (ZeitraumBetrag) -> Unit
+    kindergeld: ZBetrag,
+    onEinkommenChange: (ZBetrag) -> Unit
 ) {
 
-    var einkommenEingabe by remember { mutableStateOf(ZeitraumBetrag(Euro.NULL, Zeitraum.JAHR)) }
+    var einkommenEingabe by remember { mutableStateOf(ZBetrag(Euro.NULL, Zeitraum.JAHR)) }
 
     Section(name, modifier = Modifier.weight(1f)) {
-        ZeitraumInput(
+        ZBetragInput(
             label = "Einkommen",
             value = einkommenEingabe.betrag.toString(),
             zeitraum = einkommenEingabe.zeitraum,
@@ -41,10 +42,11 @@ fun RowScope.Parent(
         Result("Unterhalt", leistungen.unterhalt)
         Result("Studiengebühren", leistungen.studiengebuehren)
         Result("Krankenversicherung", leistungen.krankenversicherung)
+        Result("- Kindergeld", kindergeld)
 
         HLine()
 
-        Result("Gesamt", leistungen.sum)
+        Result("Gesamt", (leistungen.sum - kindergeld).min(ZBetrag.NULL))
     }
 
     LaunchedEffect(einkommenEingabe) {

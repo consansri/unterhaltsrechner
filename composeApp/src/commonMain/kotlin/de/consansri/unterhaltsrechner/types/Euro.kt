@@ -45,9 +45,13 @@ value class Euro(val inCents: Long) {
         return Prozent(first / second)
     }
 
+    fun max(max: Euro) = Euro(inCents.coerceAtMost(max.inCents))
+    fun min(min: Euro) = Euro(inCents.coerceAtLeast(min.inCents))
+
     companion object {
 
         val NULL = Euro(0)
+        val MINIJOB_GRENZE = Euro(500.0)
 
         /**
          * Parst einen String (z.B. "12,50" oder "12.5") zurück in einen Euro-Typ.

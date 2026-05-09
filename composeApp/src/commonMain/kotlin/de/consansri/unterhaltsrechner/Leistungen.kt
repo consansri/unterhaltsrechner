@@ -1,14 +1,14 @@
 package de.consansri.unterhaltsrechner
 
 import de.consansri.unterhaltsrechner.types.Prozent
-import de.consansri.unterhaltsrechner.types.ZeitraumBetrag
+import de.consansri.unterhaltsrechner.types.ZBetrag
 
 data class Leistungen(
-    val unterhalt: ZeitraumBetrag,
-    val studiengebuehren: ZeitraumBetrag,
-    val krankenversicherung: ZeitraumBetrag
+    val unterhalt: ZBetrag,
+    val studiengebuehren: ZBetrag,
+    val krankenversicherung: ZBetrag
 ) {
-    val sum: ZeitraumBetrag get() = unterhalt + studiengebuehren + krankenversicherung
+    val sum: ZBetrag get() = unterhalt + studiengebuehren + krankenversicherung
 
     operator fun times(other: Prozent) = copy(
         unterhalt = unterhalt * other,
