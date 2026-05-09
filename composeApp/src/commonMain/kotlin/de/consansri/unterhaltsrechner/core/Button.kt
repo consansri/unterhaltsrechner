@@ -36,7 +36,7 @@ fun Button(value: String, modifier: Modifier = Modifier, onClick: () -> Unit) {
 
     Text(
         text = value,
-        fontWeight = FontWeight.Bold,
+        fontWeight = FontWeight.Light,
         color = Color.DarkGray,
         modifier = modifier
             .background(bgColor, RoundedCornerShape(4.dp))

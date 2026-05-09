@@ -16,8 +16,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import de.consansri.unterhaltsrechner.types.Zeitraum
 
 @Composable
@@ -36,7 +38,7 @@ fun ZBetragInput(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        Text(label, modifier = Modifier.weight(1f), textAlign = TextAlign.Right)
+        Text(label, modifier = Modifier.weight(1f), fontWeight = FontWeight.Light, fontSize = 12.sp, textAlign = TextAlign.Right)
 
         // Wir verpacken BasicTextField und den Klick-Text in eine gemeinsame Reihe mit dem Rahmen
         Row(
@@ -55,7 +57,7 @@ fun ZBetragInput(
                 },
                 cursorBrush = SolidColor(Color.Black),
                 textStyle = LocalTextStyle.current,
-                modifier = Modifier.weight(1f).border(1.dp, borderColor, CircleShape).padding(4.dp)
+                modifier = Modifier.border(1.dp, borderColor, CircleShape).padding(4.dp)
             )
 
             Button(zeitraum.suffix) {
