@@ -1,33 +1,19 @@
 package de.consansri.unterhaltsrechner.types
 
 /**
- * Kombiniert eine Euro-Eingabe mit dem gewählten Zeitraum und rechnet es sofort auf den Monat herunter.
+ * Ein eingegebener Betrag zusammen mit seinem Zeitraum (z. B. 1.200 € pro Jahr).
+ * Für die Berechnung wird er mit [proMonat] kaufmännisch gerundet auf den Monat umgerechnet.
  */
 data class ZBetrag(
     val betrag: Euro = Euro.NULL,
-    val zeitraum: Zeitraum = Zeitraum.MONAT
+    val zeitraum: Zeitraum = Zeitraum.MONAT,
 ) {
-    val proMonat: Euro get() = betrag / zeitraum.monate
+    val proMonat: Euro get() = betrag.geteiltDurch(zeitraum.monate)
 
-    operator fun plus(other: ZBetrag) = ZBetrag(betrag = proMonat + other.proMonat, Zeitraum.MONAT)
-    operator fun minus(other: ZBetrag) = ZBetrag(betrag = proMonat - other.proMonat, Zeitraum.MONAT)
-    operator fun times(factor: Prozent) = ZBetrag(betrag = proMonat * factor, Zeitraum.MONAT)
-    operator fun div(other: ZBetrag) = proMonat / other.proMonat
-
-    fun min(other: ZBetrag) = ZBetrag(
-        betrag = proMonat.min(other.proMonat),
-        zeitraum = Zeitraum.MONAT
-    )
-
-    fun max(other: ZBetrag) = ZBetrag(
-        betrag = proMonat.max(other.proMonat),
-        zeitraum = Zeitraum.MONAT
-    )
-
-    override fun toString(): String = "$betrag ${zeitraum.suffix}"
+    override fun toString(): String = "$betrag / ${zeitraum.bezeichnung}"
 
     companion object {
-        val NULL = ZBetrag(Euro.NULL, Zeitraum.MONAT)
+        val NULL = ZBetrag()
+        fun monatlich(betrag: Euro) = ZBetrag(betrag, Zeitraum.MONAT)
     }
-
 }

@@ -1,58 +1,59 @@
-This is a Kotlin Multiplatform project targeting Web, Desktop (JVM).
+# Unterhaltsrechner
 
-* [/composeApp](./composeApp/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-    - [commonMain](./composeApp/src/commonMain/kotlin) is for code that’s common for all targets.
-    - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-      For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-      the [iosMain](./composeApp/src/iosMain/kotlin) folder would be the right place for such calls.
-      Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./composeApp/src/jvmMain/kotlin)
-      folder is the appropriate location.
+Berechnet den Kindesunterhalt, den Eltern einem **volljährigen, studierenden Kind mit eigenem Haushalt**
+monatlich schulden – transparent, mit vollständigem Rechenweg und Rechtsgrundlagen.
 
-### Build and Run Desktop (JVM) Application
+Kotlin/Compose Multiplatform-App für Desktop (JVM) und Web (Wasm/JS).
 
-To build and run the development version of the desktop app, use the run configuration from the run widget
-in your IDE’s toolbar or run it directly from the terminal:
+## Berechnungsmethode
 
-- on macOS/Linux
-  ```shell
-  ./gradlew :composeApp:run
-  ```
-- on Windows
-  ```shell
-  .\gradlew.bat :composeApp:run
-  ```
+Alle Beträge werden auf den Monat umgerechnet und exakt in Cent berechnet (kaufmännische Rundung).
 
-### Build and Run Web Application
+1. **Bedarf** = Regelbedarf Studierende laut Düsseldorfer Tabelle (2026: 990 €, davon bis 440 € Warmmiete)
+   \+ Kranken-/Pflegeversicherung (falls nicht familienversichert) + Studiengebühren.
+2. **Anrechnung** auf den Bedarf:
+   - BAföG voll, inkl. Darlehensanteil (nicht bei Vorausleistung nach § 36 BAföG),
+   - Ausbildungsvergütung (wahlweise voll, − 100 € Pauschale oder − 10 %/max. 100 €),
+   - Nebenjob nach Billigkeit (§ 1577 Abs. 2 BGB entsprechend: nicht, bis Minijob-Grenze frei, eigener Freibetrag, voll),
+   - sonstige Einkünfte voll,
+   - **Kindergeld in voller Höhe** (§ 1612b Abs. 1 Nr. 2 BGB).
+3. **Haftungsanteile** (§ 1606 Abs. 3 S. 1 BGB): Je Elternteil Einkommen − vorrangige Unterhaltspflichten
+   − angemessener Selbstbehalt (2026: 1.750 €, erhöht bei Warmmiete über 650 €). Der Restbedarf wird im
+   Verhältnis dieser einsetzbaren Einkommen verteilt; niemand zahlt mehr als sein einsetzbares Einkommen
+   (sonst Mangelfall mit ausgewiesenem Fehlbetrag).
+4. **Zahlbetrag**: Unterhaltsanteil, ggf. zuzüglich weiterzuleitendem Kindergeld.
 
-To build and run the development version of the web app, use the run configuration from the run widget
-in your IDE's toolbar or run it directly from the terminal:
+Die Eltern-Einkommen werden aus dem **BAföG-Bescheid** übernommen. Dieser beruht auf dem vorletzten
+Kalenderjahr und Pauschalen; das unterhaltsrechtlich bereinigte Einkommen kann abweichen.
 
-- for the Wasm target (faster, modern browsers):
-    - on macOS/Linux
-      ```shell
-      ./gradlew :composeApp:wasmJsBrowserDevelopmentRun
-      ```
-    - on Windows
-      ```shell
-      .\gradlew.bat :composeApp:wasmJsBrowserDevelopmentRun
-      ```
-- for the JS target (slower, supports older browsers):
-    - on macOS/Linux
-      ```shell
-      ./gradlew :composeApp:jsBrowserDevelopmentRun
-      ```
-    - on Windows
-      ```shell
-      .\gradlew.bat :composeApp:jsBrowserDevelopmentRun
-      ```
+Der Rechtsstand (Düsseldorfer Tabelle, Kindergeld, Minijob-Grenze) wird automatisch nach dem heutigen
+Datum gewählt. Werte, die noch nicht amtlich sind, werden als „vorläufig“ gekennzeichnet.
 
----
+**Keine Rechtsberatung.** Gerichte können im Einzelfall abweichen.
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html),
-[Compose Multiplatform](https://github.com/JetBrains/compose-multiplatform/#compose-multiplatform),
-[Kotlin/Wasm](https://kotl.in/wasm/)…
+### Neues Jahr ergänzen
 
-We would appreciate your feedback on Compose/Web and Kotlin/Wasm in the public Slack
-channel [#compose-web](https://slack-chats.kotlinlang.org/c/compose-web).
-If you face any issues, please report them on [YouTrack](https://youtrack.jetbrains.com/newIssue?project=CMP).
+In `composeApp/src/commonMain/kotlin/de/consansri/unterhaltsrechner/types/Jahr.kt` einen Eintrag ans Ende
+anfügen (bzw. den vorläufigen Eintrag auf `AMTLICH` setzen) und die Werte aus der neuen Düsseldorfer Tabelle
+übernehmen. Quellen: [Düsseldorfer Tabelle (OLG Düsseldorf)](https://www.olg-duesseldorf.nrw.de/infos/Duesseldorfer_Tabelle/index.php),
+Unterhaltsleitlinien der Oberlandesgerichte, Bundeskindergeldgesetz, Minijob-Zentrale.
+
+## Aufbau
+
+| Pfad | Inhalt |
+|---|---|
+| `types/` | `Euro` (Cent-genau, strenges Parsen), `ZBetrag` (Betrag + Zeitraum), `Jahr` (Rechtsstand je Jahr) |
+| `berechnung/` | Reine Berechnung `berechne(eingaben, jahr)` inkl. Rechenweg – ohne Compose, vollständig getestet |
+| `core/` | Wiederverwendbare UI-Bausteine (`BetragFeld`, `SegmentAuswahl`, `Karte`, …) |
+| `ui/` | Kopfzeile, Eingabe- und Ergebnisbereich |
+
+## Bauen, starten, testen
+
+```shell
+./gradlew :composeApp:run                          # Desktop
+./gradlew :composeApp:wasmJsBrowserDevelopmentRun  # Web (Wasm)
+./gradlew :composeApp:jsBrowserDevelopmentRun      # Web (JS)
+
+./gradlew :composeApp:jvmTest
+./gradlew :composeApp:jsBrowserTest :composeApp:wasmJsBrowserTest   # benötigt Chrome/Chromium (ggf. CHROME_BIN setzen)
+```

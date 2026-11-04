@@ -1,176 +1,88 @@
 package de.consansri.unterhaltsrechner
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import de.consansri.unterhaltsrechner.core.*
-import de.consansri.unterhaltsrechner.ratio.Deckung
-import de.consansri.unterhaltsrechner.types.*
+import de.consansri.unterhaltsrechner.berechnung.Eingaben
+import de.consansri.unterhaltsrechner.berechnung.berechne
+import de.consansri.unterhaltsrechner.types.Jahr
+import de.consansri.unterhaltsrechner.ui.EingabeBereich
+import de.consansri.unterhaltsrechner.ui.ErgebnisBereich
+import de.consansri.unterhaltsrechner.ui.Kopfzeile
+import de.consansri.unterhaltsrechner.ui.QuellenUndHinweise
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.todayIn
+import kotlin.time.Clock
 
-@OptIn(ExperimentalMaterial3Api::class)
+/** Ab dieser Breite stehen Eingaben und Ergebnis nebeneinander. */
+private val BREIT = 900.dp
+
 @Composable
-fun Calculator() {
+fun Calculator(heute: LocalDate = remember { Clock.System.todayIn(TimeZone.currentSystemDefault()) }) {
+    val aktuellesJahr = remember(heute) { Jahr.fuer(heute) }
+    var jahr by remember(aktuellesJahr) { mutableStateOf(aktuellesJahr) }
+    var eingaben by remember { mutableStateOf(Eingaben()) }
+    val ergebnis = remember(eingaben, jahr) { berechne(eingaben, jahr) }
 
-    var jahr by remember { mutableStateOf(Jahr.J2026) }
+    BoxWithConstraints(Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        val breit = maxWidth >= BREIT
+        val kopf: @Composable () -> Unit = {
+            Kopfzeile(jahr = jahr, aktuellesJahr = aktuellesJahr, heute = heute, onJahrChange = { jahr = it })
+        }
+        val eingabe: @Composable () -> Unit = {
+            EingabeBereich(eingaben = eingaben, jahr = jahr, onEingabenChange = { eingaben = it })
+        }
+        val ausgabe: @Composable () -> Unit = {
+            ErgebnisBereich(ergebnis = ergebnis, kindergeldEmpfaenger = eingaben.kindergeldEmpfaenger)
+            QuellenUndHinweise()
+        }
 
-    var grundbedarfEingabe by remember(jahr) { mutableStateOf(jahr.grundbedarf.sum) }
-    var foerderungEingabe by remember { mutableStateOf(ZBetrag(Euro(0))) }
-    var einkommenEingabe by remember { mutableStateOf(ZBetrag(Euro(0))) }
-    var einkommensregelung by remember { mutableStateOf(Einkommensregelung.NICHTS) }
-    // Für die interne Rechnungen nutzen wir konsequent die auf den Monat normierten Werte
-    val unterhalt =
-        (grundbedarfEingabe - foerderungEingabe - einkommensregelung.calc(einkommenEingabe, jahr)).min(ZBetrag.NULL)
-
-    var studiengebuehrenEingabe by remember { mutableStateOf(ZBetrag.NULL.copy(zeitraum = Zeitraum.SEMESTER)) }
-    var krankenversicherungEingabe by remember { mutableStateOf(ZBetrag.NULL) }
-
-    val scrollState = rememberScrollState()
-
-    Column(
-        Modifier.fillMaxSize().verticalScroll(scrollState).padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-
-        EnumSelector(jahr) { jahr = it }
-
-        Section("Bedarf") {
-
-            Descr(
-                "§ 1610 Maß des Unterhalts", """
-                (1) Das Maß des zu gewährenden Unterhalts bestimmt sich nach der Lebensstellung des Bedürftigen (angemessener Unterhalt).
-                (2) Der Unterhalt umfasst den gesamten Lebensbedarf einschließlich der Kosten einer angemessenen Vorbildung zu einem Beruf, 
-                    bei einer der Erziehung bedürftigen Person auch die Kosten der Erziehung.
-            """.trimIndent()
-            )
-
-            Parallel {
-
-                Section("Unterhalt", Modifier.weight(1f)) {
-
-                    Descr(
-                        "DT $jahr",
-                        """
-                        Grundbedarf (ohne KV und Studiengebühren): ${jahr.grundbedarf.sum} = ${jahr.grundbedarf.wohnpauschale} (wohnpauschale) + ${jahr.grundbedarf.sonstiges} (sonstiges)
-                    """.trimIndent()
-                    )
-
-                    ZBetragInput(
-                        label = "Grundbedarf",
-                        value = grundbedarfEingabe.betrag.toString(),
-                        zeitraum = grundbedarfEingabe.zeitraum,
-                        onValueChange = {
-                            Euro.parse(it)
-                                ?.let { e -> grundbedarfEingabe = grundbedarfEingabe.copy(betrag = e); true }
-                                ?: false
-                        },
-                        onZeitraumChange = { grundbedarfEingabe = grundbedarfEingabe.copy(zeitraum = it) }
-                    )
-
-                    ZBetragInput(
-                        label = "- Förderung (BAFÖG)",
-                        value = foerderungEingabe.betrag.toString(),
-                        zeitraum = foerderungEingabe.zeitraum,
-                        onValueChange = {
-                            Euro.parse(it)
-                                ?.let { e -> foerderungEingabe = foerderungEingabe.copy(betrag = e); true }
-                                ?: false
-                        },
-                        onZeitraumChange = { foerderungEingabe = foerderungEingabe.copy(zeitraum = it) }
-                    )
-
-                    ZBetragInput(
-                        label = "- Einnahmen",
-                        value = einkommenEingabe.betrag.toString(),
-                        zeitraum = einkommenEingabe.zeitraum,
-                        onValueChange = {
-                            Euro.parse(it)
-                                ?.let { e -> einkommenEingabe = einkommenEingabe.copy(betrag = e); true }
-                                ?: false
-                        },
-                        onZeitraumChange = { einkommenEingabe = einkommenEingabe.copy(zeitraum = it) }
-                    )
-
-                    EnumSelector(einkommensregelung, name = {
-                        it.uiName(jahr)
-                    }) { einkommensregelung = it }
-
-                    HLine()
-
-                    Result("Unterhalt", unterhalt)
+        if (breit) {
+            Row(
+                Modifier.widthIn(max = 1280.dp).fillMaxHeight().padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                Spalte(Modifier.weight(1f)) {
+                    kopf()
+                    eingabe()
                 }
-
-                Section("Studium", Modifier.weight(1f)) {
-
-                    Spacer(Modifier.weight(1f))
-
-                    HLine()
-
-                    ZBetragInput(
-                        label = "Gebühren",
-                        value = studiengebuehrenEingabe.betrag.toString(),
-                        zeitraum = studiengebuehrenEingabe.zeitraum,
-                        onValueChange = {
-                            Euro.parse(it)
-                                ?.let { e ->
-                                    studiengebuehrenEingabe = studiengebuehrenEingabe.copy(betrag = e); true
-                                }
-                                ?: false
-                        },
-                        onZeitraumChange = { studiengebuehrenEingabe = studiengebuehrenEingabe.copy(zeitraum = it) }
-                    )
-                }
-
-                Section("Versicherung", Modifier.weight(1f)) {
-
-                    Spacer(Modifier.weight(1f))
-
-                    HLine()
-                    ZBetragInput(
-                        label = "Gebühren",
-                        value = krankenversicherungEingabe.betrag.toString(),
-                        zeitraum = krankenversicherungEingabe.zeitraum,
-                        onValueChange = {
-                            Euro.parse(it)?.let { e ->
-                                krankenversicherungEingabe = krankenversicherungEingabe.copy(betrag = e); true
-                            } ?: false
-                        },
-                        onZeitraumChange = {
-                            krankenversicherungEingabe = krankenversicherungEingabe.copy(zeitraum = it)
-                        }
-                    )
-                }
+                // Eigene Scroll-Spalte: das Ergebnis bleibt beim Bearbeiten der Eingaben im Blick.
+                Spalte(Modifier.weight(1f)) { ausgabe() }
+            }
+        } else {
+            Spalte(Modifier.widthIn(max = 720.dp).padding(horizontal = 12.dp)) {
+                kopf()
+                eingabe()
+                ausgabe()
             }
         }
-
-
-        val leistungen = remember(
-            unterhalt,
-            studiengebuehrenEingabe,
-            krankenversicherungEingabe
-        ) {
-            Leistungen(
-                unterhalt = unterhalt,
-                studiengebuehren = studiengebuehrenEingabe,
-                krankenversicherung = krankenversicherungEingabe
-            )
-        }
-
-        Deckung(leistungen, jahr)
-
     }
-
 }
 
-
-
-
-
-
-
-
+@Composable
+private fun Spalte(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
+    Box(modifier.fillMaxHeight()) {
+        Column(
+            Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) { content() }
+    }
+}
