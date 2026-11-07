@@ -229,9 +229,10 @@ private fun ElternteilFelder(
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(elternteil.bezeichnung, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
             BetragFeld(
-                label = "Einkommen laut Bescheid",
+                label = "Bereinigtes Nettoeinkommen",
                 wert = eingabe.einkommen,
                 onWertChange = { onChange(eingabe.copy(einkommen = it)) },
+                erlaeuterung = "Ersatzweise: Einkommen laut BAföG-Bescheid.",
             )
             // Felder mit eingetragenen Werten bleiben sichtbar, damit nichts verdeckt in die Berechnung eingeht.
             if (!hatZusatz) {
