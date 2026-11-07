@@ -33,19 +33,19 @@ Datum gewählt. Werte, die noch nicht amtlich sind, werden als „vorläufig“ 
 
 ### Neues Jahr ergänzen
 
-In `composeApp/src/commonMain/kotlin/de/consansri/unterhaltsrechner/types/Jahr.kt` einen Eintrag ans Ende
-anfügen (bzw. den vorläufigen Eintrag auf `AMTLICH` setzen) und die Werte aus der neuen Düsseldorfer Tabelle
-übernehmen. Quellen: [Düsseldorfer Tabelle (OLG Düsseldorf)](https://www.olg-duesseldorf.nrw.de/infos/Duesseldorfer_Tabelle/index.php),
+Siehe [CONTRIBUTING.md](CONTRIBUTING.md#adding-a-legal-year).
+
+Quellen: [Düsseldorfer Tabelle (OLG Düsseldorf)](https://www.olg-duesseldorf.nrw.de/infos/Duesseldorfer_Tabelle/index.php),
 Unterhaltsleitlinien der Oberlandesgerichte, Bundeskindergeldgesetz, Minijob-Zentrale.
 
 ## Aufbau
 
 | Pfad | Inhalt |
 |---|---|
-| `types/` | `Euro` (Cent-genau, strenges Parsen), `ZBetrag` (Betrag + Zeitraum), `Jahr` (Rechtsstand je Jahr) |
-| `berechnung/` | Reine Berechnung `berechne(eingaben, jahr)` inkl. Rechenweg – ohne Compose, vollständig getestet |
-| `core/` | Wiederverwendbare UI-Bausteine (`BetragFeld`, `SegmentAuswahl`, `Karte`, …) |
-| `ui/` | Kopfzeile, Eingabe- und Ergebnisbereich |
+| `money/` | `Euro` (cent-genau, strenges Parsen), `PeriodicAmount` (Betrag + Zeitraum), `Percent` |
+| `calculation/` | Reine Berechnung `calculate(inputs, year)` inkl. Rechenweg – ohne Compose, vollständig getestet; `LegalYear` (Rechtsstand je Jahr) |
+| `ui/` | Bildschirm, Kopfzeile, Eingabe- und Ergebnisbereich |
+| `ui/components/`, `ui/theme/` | Wiederverwendbare UI-Bausteine, Farben |
 
 ## Bauen, starten, testen
 
@@ -57,6 +57,8 @@ Unterhaltsleitlinien der Oberlandesgerichte, Bundeskindergeldgesetz, Minijob-Zen
 ./gradlew :composeApp:jvmTest
 ./gradlew :composeApp:jsBrowserTest :composeApp:wasmJsBrowserTest   # benötigt Chrome/Chromium (ggf. CHROME_BIN setzen)
 ```
+
+Regeln für die Mitarbeit: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Lizenz
 
