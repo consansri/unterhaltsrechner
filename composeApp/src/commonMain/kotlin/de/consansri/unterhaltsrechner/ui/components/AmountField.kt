@@ -2,9 +2,11 @@ package de.consansri.unterhaltsrechner.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -35,6 +37,7 @@ import de.consansri.unterhaltsrechner.money.PeriodicAmount.Period
  * @param tableValue Monthly table value; if [value] differs from it, the field offers [onReset].
  * @param periodSelectable `false` for amounts that are always monthly, such as table values.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun AmountField(
     label: String,
@@ -55,15 +58,21 @@ internal fun AmountField(
     }
 
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+        // The picker moves below the label when both do not fit on one line.
+        FlowRow(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.Start),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(label, style = MaterialTheme.typography.labelLarge)
             if (periodSelectable) {
                 SegmentedPicker(
                     options = Period.entries,
                     selected = value.period,
                     onSelect = { onChange(value.copy(period = it)) },
                     label = { if (it == Period.SEMESTER) "Sem." else it.label },
-                    modifier = Modifier.widthIn(max = 210.dp),
+                    modifier = Modifier.width(IntrinsicSize.Max),
                 )
             } else {
                 Explanation("pro Monat")
@@ -106,8 +115,8 @@ internal fun AmountField(
         }
 
         if (tableValue != null && onReset != null && value.perMonth != tableValue) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Explanation("Tabellenwert: $tableValue", Modifier.weight(1f, fill = false))
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
+                Explanation("Tabellenwert: $tableValue")
                 TextButton(onClick = onReset) { Text("Zurücksetzen") }
             }
         }

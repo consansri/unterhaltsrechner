@@ -1,7 +1,6 @@
 package de.consansri.unterhaltsrechner.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -36,13 +35,11 @@ import de.consansri.unterhaltsrechner.money.PeriodicAmount
 import de.consansri.unterhaltsrechner.ui.components.AmountField
 import de.consansri.unterhaltsrechner.ui.components.Callout
 import de.consansri.unterhaltsrechner.ui.components.CalloutTone
+import de.consansri.unterhaltsrechner.ui.components.EqualColumns
 import de.consansri.unterhaltsrechner.ui.components.Explanation
 import de.consansri.unterhaltsrechner.ui.components.RadioOptions
 import de.consansri.unterhaltsrechner.ui.components.SectionCard
 import de.consansri.unterhaltsrechner.ui.components.SegmentedPicker
-
-/** From this width on, the two parents' cards are shown side by side. */
-private val ParentsSideBySideMinWidth = 560.dp
 
 @Composable
 internal fun InputSection(
@@ -188,23 +185,15 @@ private fun ParentsCard(inputs: Inputs, year: LegalYear, onChange: (Inputs) -> U
                 "das unterhaltsrechtliche Einkommen kann abweichen.",
             tone = CalloutTone.INFO,
         )
-        BoxWithConstraints(Modifier.fillMaxWidth()) {
-            val sideBySide = maxWidth >= ParentsSideBySideMinWidth
-            val parentFields: @Composable (Modifier) -> Unit = { fieldModifier ->
-                Parent.entries.forEach { parent ->
-                    ParentFields(
-                        parent = parent,
-                        finances = inputs.parent(parent),
-                        year = year,
-                        onChange = { onChange(inputs.withParent(parent, it)) },
-                        modifier = fieldModifier,
-                    )
-                }
-            }
-            if (sideBySide) {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) { parentFields(Modifier.weight(1f)) }
-            } else {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { parentFields(Modifier.fillMaxWidth()) }
+        // The parents' cards sit side by side as soon as both fit, and stack otherwise.
+        EqualColumns(Modifier.fillMaxWidth(), spacing = 12.dp) {
+            Parent.entries.forEach { parent ->
+                ParentFields(
+                    parent = parent,
+                    finances = inputs.parent(parent),
+                    year = year,
+                    onChange = { onChange(inputs.withParent(parent, it)) },
+                )
             }
         }
     }

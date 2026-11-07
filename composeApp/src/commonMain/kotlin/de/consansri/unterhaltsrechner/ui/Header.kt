@@ -2,7 +2,8 @@ package de.consansri.unterhaltsrechner.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,6 +20,7 @@ import de.consansri.unterhaltsrechner.ui.components.Explanation
 import de.consansri.unterhaltsrechner.ui.components.SectionCard
 import de.consansri.unterhaltsrechner.ui.components.SegmentedPicker
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun Header(
     year: LegalYear,
@@ -56,8 +58,8 @@ internal fun Header(
                     "Selbstbehalt ${year.selfReserve} · Minijob-Grenze ${year.minijobLimit}",
             )
             if (year != currentYear) {
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Explanation("Heute gilt der Rechtsstand $currentYear.", Modifier.weight(1f))
+                FlowRow(Modifier.fillMaxWidth(), itemVerticalAlignment = Alignment.CenterVertically) {
+                    Explanation("Heute gilt der Rechtsstand $currentYear.")
                     TextButton(onClick = { onYearChange(currentYear) }) { Text("Zu $currentYear") }
                 }
             }

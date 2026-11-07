@@ -4,18 +4,23 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -27,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -37,6 +43,7 @@ import de.consansri.unterhaltsrechner.calculation.Section.Step
 import de.consansri.unterhaltsrechner.money.Euro
 import de.consansri.unterhaltsrechner.ui.components.Callout
 import de.consansri.unterhaltsrechner.ui.components.CalloutTone
+import de.consansri.unterhaltsrechner.ui.components.EqualColumns
 import de.consansri.unterhaltsrechner.ui.components.Explanation
 import de.consansri.unterhaltsrechner.ui.components.SectionCard
 import de.consansri.unterhaltsrechner.ui.theme.SignalColors
@@ -46,20 +53,21 @@ internal fun ResultSection(
     result: MaintenanceResult,
     childBenefitRecipient: ChildBenefitRecipient,
     modifier: Modifier = Modifier,
+    resultCardModifier: Modifier = Modifier,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-        ResultCard(result, childBenefitRecipient)
+        ResultCard(result, childBenefitRecipient, resultCardModifier)
         DerivationCard(result)
     }
 }
 
 @Composable
-private fun ResultCard(result: MaintenanceResult, childBenefitRecipient: ChildBenefitRecipient) {
-    SectionCard("Ergebnis", subtitle = "Pro Monat · Rechtsstand ${result.year}") {
+private fun ResultCard(result: MaintenanceResult, childBenefitRecipient: ChildBenefitRecipient, modifier: Modifier = Modifier) {
+    SectionCard("Ergebnis", modifier, subtitle = "Pro Monat · Rechtsstand ${result.year}") {
         result.notices.forEach { NoticeCallout(it) }
 
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            result.parents.forEach { ParentShareCard(it, Modifier.weight(1f)) }
+        EqualColumns(Modifier.fillMaxWidth(), spacing = 12.dp) {
+            result.parents.forEach { ParentShareCard(it) }
         }
 
         Coverage(result, childBenefitRecipient)
@@ -104,7 +112,7 @@ private fun ParentShareCard(share: MaintenanceResult.ParentShare, modifier: Modi
     ) {
         Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text("${share.parent} zahlt", style = MaterialTheme.typography.labelLarge)
-            Text(share.payment.toString(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            Text(share.payment.toString().unbreakable(), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Text("pro Monat", style = MaterialTheme.typography.bodySmall)
             HorizontalDivider(Modifier.padding(vertical = 6.dp), color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.2f))
             SmallRow("Unterhaltsanteil", share.maintenance.toString())
@@ -116,11 +124,19 @@ private fun ParentShareCard(share: MaintenanceResult.ParentShare, modifier: Modi
     }
 }
 
+/**
+ * Replaces spaces with no-break spaces. A Text reports only its longest word as minimum width, so an amount like
+ * `0,00 €` would otherwise count as `0,00` when a parent decides how many columns fit.
+ */
+private fun String.unbreakable(): String = replace(' ', '\u00A0')
+
 @Composable
 private fun SmallRow(label: String, value: String) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(label, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-        Text(value, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End)
+    // Natural widths instead of a weighted label: the row's minimum width is then exactly label + gap + value.
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        Text(label.unbreakable(), style = MaterialTheme.typography.bodySmall, maxLines = 1)
+        Spacer(Modifier.width(8.dp))
+        Text(value.unbreakable(), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.End, maxLines = 1)
     }
 }
 
@@ -144,9 +160,11 @@ private fun Coverage(result: MaintenanceResult, childBenefitRecipient: ChildBene
     ).filter { it.amount > Euro.ZERO }
     if (slices.isEmpty()) return
 
+    // Sizes follow the text size, so they scale with font scaling and zoom.
+    val barHeight = with(LocalDensity.current) { MaterialTheme.typography.bodyMedium.fontSize.toDp() }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text("Deckung des Bedarfs von ${result.need}", style = MaterialTheme.typography.labelLarge)
-        Row(Modifier.fillMaxWidth().height(14.dp).clip(RoundedCornerShape(7.dp))) {
+        Row(Modifier.fillMaxWidth().height(barHeight).clip(RoundedCornerShape(50))) {
             slices.forEach { Box(Modifier.weight(it.amount.cents.toFloat()).fillMaxHeight().background(it.color)) }
         }
         slices.forEach { LegendRow(it) }
@@ -158,9 +176,10 @@ private fun Coverage(result: MaintenanceResult, childBenefitRecipient: ChildBene
 @Composable
 private fun LegendRow(slice: CoverageSlice) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        Box(Modifier.size(10.dp).clip(CircleShape).background(slice.color))
+        val dotSize = with(LocalDensity.current) { MaterialTheme.typography.bodySmall.fontSize.toDp() }
+        Box(Modifier.size(dotSize).clip(CircleShape).background(slice.color))
         Text(slice.label, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-        Text(slice.amount.toString(), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.End)
+        Text(slice.amount.toString().unbreakable(), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.End)
     }
 }
 
@@ -203,10 +222,32 @@ private fun DerivationRow(step: Step) {
             Step.Kind.TOTAL -> "= "
         }
         Text(
-            "$sign${step.amount}",
+            "$sign${step.amount}".unbreakable(),
             style = MaterialTheme.typography.bodyMedium,
             fontWeight = if (isTotal) FontWeight.SemiBold else FontWeight.Normal,
             textAlign = TextAlign.End,
         )
+    }
+}
+
+/** Compact result that stays at the bottom while the result card is out of view. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun ResultSummaryBar(result: MaintenanceResult, onShowResult: () -> Unit, modifier: Modifier = Modifier) {
+    Surface(modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.primaryContainer, tonalElevation = 3.dp, shadowElevation = 6.dp) {
+        FlowRow(
+            Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalArrangement = Arrangement.Center,
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                result.parents.joinToString(" · ") { "${it.parent} ${it.payment}" } + " pro Monat",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+            )
+            TextButton(onClick = onShowResult) { Text("Zum Ergebnis") }
+        }
     }
 }
