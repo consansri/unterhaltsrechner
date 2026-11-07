@@ -57,3 +57,7 @@ Unterhaltsleitlinien der Oberlandesgerichte, Bundeskindergeldgesetz, Minijob-Zen
 ./gradlew :composeApp:jvmTest
 ./gradlew :composeApp:jsBrowserTest :composeApp:wasmJsBrowserTest   # benötigt Chrome/Chromium (ggf. CHROME_BIN setzen)
 ```
+
+## Lizenz
+
+[MIT](LICENSE)
